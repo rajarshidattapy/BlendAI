@@ -4,9 +4,9 @@ Openrouter: Openrouter AI model generator for Blender
 File select:
 How to Use:
 
-Enter a GitHub repository URL that contains Blender files
-Set the branch name (defaults to "main")
-Click "Fetch .blend Files" to download and scan the repository
-Select a .blend file from the dropdown menu
-Choose what to import (objects, materials, textures)
-Click "Import Selected" to bring those assets into your current Blender project
+1) Enter a GitHub repository URL that contains Blender files
+2) Set the branch name (defaults to "main")
+3)  Click "Fetch .blend Files" to download and scan the repository
+4) Select a .blend file from the dropdown menu
+5) Choose what to import (objects, materials, textures)
+6) Click "Import Selected" to bring those assets into your current Blender project
