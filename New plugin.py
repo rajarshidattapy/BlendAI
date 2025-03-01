@@ -1,50 +1,49 @@
 bl_info = {
-    "name": "BlendAI",
-    "description": "Generates and executes Blender scripts using various AI models via OpenRouter",
-    "author": "Rahil M & Rajarshi Datta", 
-    "version": (1, 4),
+    "name": "blendAI",
+    "description": "Generates and executes Blender scripts based on a prompt",
+    "author": "Rajarshi Datta & Rahil Masood",
+    "version": (2, 0),
     "blender": (4, 3, 2),
     "location": "View3D > Sidebar > AI Generator",
     "category": "3D View",
 }
 
-import bpy  # type: ignore
 import requests
-import json
-import textwrap
 import re
-import time
 import os
-import tempfile
+import bpy  # type: ignore
+import textwrap
+import time
 from enum import Enum
 
-LOG_FILE = os.path.join(bpy.app.tempdir, "ai_log.txt")
-
-# OpenRouter configuration
-OPENROUTER_API_KEY = "put your api key here" 
+# Replace with your actual OpenRouter API key
+OPENROUTER_API_KEY = ""
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# Available models through OpenRouter
 class AIModel(Enum):
-    GEMINI_PRO = "google/gemini-1.5-pro" 
-    MISTRAL_7B = "mistralai/mistral-7b-instruct"
-    CLAUDE = "anthropic/claude-3-sonnet"
+    CLAUDE = "anthropic/claude-3.5-sonnet"
+    MISTRAL = "mistralai/mistral-7b-instruct"
+    GEMINI_PRO = "google/gemini-1.5-pro"
 
-# Default model
-DEFAULT_MODEL = AIModel.GEMINI_PRO.value
+default_model = AIModel.CLAUDE.value
 
-# Implementing Log files
-def read_log_history():
-    if not os.path.exists(LOG_FILE):
-        return ""
-    with open(LOG_FILE, "r", encoding="utf-8") as f:
-        return f.read()[-2000:]
+LOG_FILE = os.path.join(bpy.app.tempdir, "ai_log.txt")
+DEPRECATED_LOG_FILE = os.path.join(bpy.app.tempdir, "deprecated_log.txt")
 
-def append_to_log(prompt, response, model_used):
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(f"Model: {model_used}\nPrompt: {prompt}\nResponse:\n{response}\n{'-'*50}\n")
+DEPRECATED_FUNCTIONS = [
+    "bpy.ops.mesh.primitive_cube_add",
+    "bpy.ops.mesh.primitive_uv_sphere_add",
+    "bpy.ops.mesh.primitive_cone_add",
+    "bpy.ops.mesh.primitive_cylinder_add",
+    "bpy.ops.object.mode_set",
+    "bpy.ops.object.select_by_type",
+    "bpy.ops.object.select_all",
+    "bpy.ops.view3d.view_selected",
+    "bpy.types.SpaceView3D.draw_handler_add",
+    "bpy.ops.object.grease_pencil_add",
+    "bpy.ops.object.curve_add"
+]
 
-# Direct Online Asset Import
 def import_online_asset(url):
     """Imports a .blend asset from a given online URL."""
     if not url.endswith(".blend"):
@@ -53,12 +52,12 @@ def import_online_asset(url):
     try:
         response = requests.get(url, stream=True)
         if response.status_code == 200:
-            temp_file = tempfile.NamedTemporaryFile(suffix=".blend", delete=False)
-            with open(temp_file.name, "wb") as f:
+            temp_file = os.path.join(bpy.app.tempdir, "downloaded_asset.blend")
+            with open(temp_file, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             
-            bpy.ops.wm.append(filepath=temp_file.name, directory=temp_file.name + "\\Object\\", filename="")
+            bpy.ops.wm.append(filepath=temp_file, directory=temp_file + "\\Object\\", filename="")
             return "Asset imported successfully."
         else:
             return f"# Error: Failed to download the file. HTTP {response.status_code}"
@@ -76,11 +75,11 @@ class ImportOnlineAssetOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 class AI_CodeGeneratorPanel(bpy.types.Panel):
-    bl_label = "BlendAI"
-    bl_idname = "VIEW3D_PT_ai_code_generator"
+    bl_label = "blendAI"
+    bl_idname = "VIEW3D_PT_ai_code_generator_openrouter"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "BlendAI"
+    bl_category = "blendAI"
 
     def draw(self, context):
         layout = self.layout
@@ -90,8 +89,7 @@ class AI_CodeGeneratorPanel(bpy.types.Panel):
         layout.label(text="Enter prompt:")
         layout.prop(context.scene, "ai_prompt", text="")
         row = layout.row()
-        row.operator("script.generate_and_run_code", text="Generate & Run")
-        row.operator("script.generate_only", text="Generate Only")
+        row.operator("script.generate_and_run_code", text="Generate Prompt")
         layout.separator(factor=2.0)
         layout.label(text="Generated Code:")
         layout.prop(context.scene, "ai_response", text="")
@@ -104,9 +102,13 @@ class AI_CodeGeneratorPanel(bpy.types.Panel):
         layout.operator("script.import_online_asset", text="Import Asset")
         layout.prop(context.scene, "import_status", text="")
 
+
 def register():
     bpy.utils.register_class(AI_CodeGeneratorPanel)
     bpy.utils.register_class(ImportOnlineAssetOperator)
+    bpy.types.Scene.ai_selected_model = bpy.props.EnumProperty(
+        name="AI Model", items=[(model.value, model.name, "") for model in AIModel], default=default_model
+    )
     bpy.types.Scene.ai_prompt = bpy.props.StringProperty(name="Prompt", default="")
     bpy.types.Scene.ai_response = bpy.props.StringProperty(name="Generated Code", default="")
     bpy.types.Scene.ai_execution_status = bpy.props.StringProperty(name="Execution Status", default="")
@@ -116,6 +118,7 @@ def register():
 def unregister():
     bpy.utils.unregister_class(AI_CodeGeneratorPanel)
     bpy.utils.unregister_class(ImportOnlineAssetOperator)
+    del bpy.types.Scene.ai_selected_model
     del bpy.types.Scene.ai_prompt
     del bpy.types.Scene.ai_response
     del bpy.types.Scene.ai_execution_status
