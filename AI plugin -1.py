@@ -16,7 +16,7 @@ import textwrap
 import time
 
 # Replace with your actual OpenRouter API key
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "Put your api key here"
 MODEL_NAME = "anthropic/claude-3.5-sonnet"
 
 LOG_FILE = os.path.join(bpy.app.tempdir, "ai_log.txt")
