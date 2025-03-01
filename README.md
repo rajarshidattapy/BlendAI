@@ -1,4 +1,4 @@
-# BlendAI: Updated
+# BlendAI: Rahil Masood & Rajarshi Datta
 
 - Open LLM Router – Allowing users to choose their preferred AI model for user choice and flexibility.
 - Direct Online Asset Import – Bringing open-source collaboration to 3D Blender, enabling direct imports allowing users to input a .blend file URL without manual downloads (like 
