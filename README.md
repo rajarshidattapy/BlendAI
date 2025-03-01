@@ -1,12 +1,7 @@
-# BlendAI
-Openrouter: Openrouter AI model generator for Blender
+# BlendAI: Updated
 
-File select:
-How to Use:
+🔹 Open LLM Router – Allowing users to choose their preferred AI model for user choice and flexibility.
+🔹 Direct Online Asset Import – Bringing open-source collaboration to 3D Blender, enabling direct imports allowing users to input a .blend file URL without manual downloads (like Spline!).
+🔹 LLM Upgrade – Switched from Gemini-1.5-pro to Claude-sonnet-3.5, improving prompt efficiency & handling complex inputs like:
+    "Remove the doughnut's chocolate sprinkles and add vanilla sprinkles." 🍩✨
 
-1) Enter a GitHub repository URL that contains Blender files (ex: https://github.com/thesaravanakumar/blender-projects/tree/main)
-2) Set the branch name (defaults to "main")
-3)  Click "Fetch .blend Files" to download and scan the repository
-4) Select a .blend file from the dropdown menu
-5) Choose what to import (objects, materials, textures)
-6) Click "Import Selected" to bring those assets into your current Blender project
