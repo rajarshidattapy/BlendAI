@@ -21,7 +21,7 @@ from enum import Enum
 LOG_FILE = os.path.join(bpy.app.tempdir, "ai_log.txt")
 
 # OpenRouter configuration
-OPENROUTER_API_KEY = "" 
+OPENROUTER_API_KEY = "put your api key here" 
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Available models through OpenRouter
