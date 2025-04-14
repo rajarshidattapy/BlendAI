@@ -23,7 +23,7 @@ from enum import Enum
 LOG_FILE = os.path.join(bpy.app.tempdir, "ai_log.txt")
 
 # OpenRouter configuration
-OPENROUTER_API_KEY = "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" 
+OPENROUTER_API_KEY = "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"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Available models through OpenRouter - focusing on free models

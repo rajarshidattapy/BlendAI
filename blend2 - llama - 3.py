@@ -1,7 +1,7 @@
 bl_info = {
-    "name": "blendAI",
+    "name": "blendAI - nvidia/llama-3.1-nemotron-70b-instruct",
     "description": "Generates and executes Blender scripts based on a prompt",
-    "author": "Rajarshi Datta",
+    "author": "Rajarshi",
     "version": (1, 5),
     "blender": (4, 3, 2),
     "location": "View3D > Sidebar > AI Generator",
@@ -15,9 +15,8 @@ import bpy  # type: ignore
 import textwrap
 import time
 
-# Replace with your actual OpenRouter API key
-OPENROUTER_API_KEY = "your_api_key"
-MODEL_NAME = "google/gemini-2.5-pro-exp-03-25:free"
+OPENROUTER_API_KEY = "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"
+MODEL_NAME = "nvidia/llama-3.1-nemotron-70b-instruct:free"
 
 LOG_FILE = os.path.join(bpy.app.tempdir, "ai_log.txt")
 DEPRECATED_LOG_FILE = os.path.join(bpy.app.tempdir, "deprecated_log.txt")
@@ -33,34 +32,8 @@ DEPRECATED_FUNCTIONS = [
     "bpy.ops.view3d.view_selected",
     "bpy.types.SpaceView3D.draw_handler_add",
     "bpy.ops.object.grease_pencil_add",
-    "bpy.ops.object.curve_add",
-    # More deprecated ops/functions
-    "bpy.ops.mesh.primitive_grid_add",
-    "bpy.ops.mesh.primitive_monkey_add",  
-    "bpy.ops.mesh.primitive_torus_add",
-    "bpy.ops.object.origin_set",
-    "bpy.ops.object.duplicate_move",
-    "bpy.ops.object.delete",
-    "bpy.ops.transform.translate",
-    "bpy.ops.transform.rotate",
-    "bpy.ops.transform.resize",
-    # View-related that don't belong in scripting
-    "bpy.ops.view3d.camera_to_view",
-    "bpy.ops.view3d.camera_to_view_selected",
-    "bpy.ops.view3d.view_all",
-    # Material misuses
-    "bpy.data.materials.new",
-    "bpy.data.objects[''].data.materials.append",
-    # Grease pencil: deprecated in many newer uses
-    "bpy.data.grease_pencils.new",
-    "bpy.ops.gpencil.draw",
-    # Custom vector classes — often misused
-    "mathutils.Vector()",
-    "mathutils.Euler()",
-    "mathutils.Matrix()"
+    "bpy.ops.object.curve_add"
 ]
-
-
 
 def read_log_history():
     """Read previous prompts and responses from the log file."""
@@ -87,10 +60,10 @@ def get_generated_code(prompt):
         history = read_log_history()
 
         system_prompt = f"""You are an AI specialized in generating Blender 4.3 Python scripts.
-- Always return **valid and executable** Python code.
+- Always return *valid and executable* Python code.
 - Ensure all object materials exist before modifying them.
-- Do **NOT** include explanations or formatting—just the raw script.
-- **Avoid using the following deprecated functions:** 
+- Do *NOT* include explanations or formatting—just the raw script.
+- *Avoid using the following deprecated functions:* 
 {', '.join(DEPRECATED_FUNCTIONS)}
 
 ## Previous Interactions:
@@ -118,7 +91,21 @@ def get_generated_code(prompt):
         if response.status_code == 200:
             result = response.json()
             code = result["choices"][0]["message"]["content"].strip()
-            code = re.sub(r'^```[a-zA-Z]*\n|```$', '', code, flags=re.MULTILINE)
+            
+            # Remove any markdown code block markers
+            code = re.sub(r'^```python\s*|^```\s*|\s*```$', '', code, flags=re.MULTILINE)
+            
+            # Remove any leading language identifier or comments
+            code = re.sub(r'^python\s*|^#.*$', '', code, flags=re.MULTILINE)
+            
+            # Clean up empty lines at start and end
+            code = code.strip()
+            
+            # Validate the code can be compiled
+            try:
+                compile(code, '<string>', 'exec')
+            except SyntaxError as e:
+                return f"# Syntax Error in generated code: {str(e)}"
 
             check_deprecated_usage(code)
             append_to_log(prompt, code)
